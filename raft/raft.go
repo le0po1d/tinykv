@@ -407,6 +407,7 @@ func stepCandidate(r *Raft, m pb.Message) error {
 		}
 	case pb.MessageType_MsgHeartbeat: // candidate receive heartbeat should become follower
 		r.becomeFollower(m.Term, m.From)
+		r.handleHeartbeat(m)
 	case pb.MessageType_MsgAppend: //candidate receive append should become follower
 		r.becomeFollower(m.Term, m.From)
 		r.handleAppendEntries(m)
@@ -458,7 +459,10 @@ func stepFollower(r *Raft, m pb.Message) error {
 		r.resetElectionTimer()
 		r.Lead = m.From
 		r.handleAppendEntries(m)
+	case pb.MessageType_MsgHeartbeat:
+
 	}
+
 	return nil
 }
 
@@ -546,6 +550,8 @@ func (r *Raft) bcastHeartbeat() {
 // handleHeartbeat handle Heartbeat RPC request
 func (r *Raft) handleHeartbeat(m pb.Message) {
 	// Your Code Here (2A).
+	r.RaftLog.committed = m.Commit
+	r.send(&pb.Message{MsgType: pb.MessageType_MsgHeartbeatResponse, To: m.To})
 }
 
 // handleSnapshot handle Snapshot RPC request

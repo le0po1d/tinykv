@@ -930,7 +930,12 @@ func TestRecvMessageType_MsgBeat2AA(t *testing.T) {
 		sm := newTestRaft(1, []uint64{1, 2, 3}, 10, 1, NewMemoryStorage())
 		sm.RaftLog = newLog(&MemoryStorage{ents: []pb.Entry{{}, {Index: 1, Term: 0}, {Index: 2, Term: 1}}})
 		sm.Term = 1
-		sm.State = tt.state
+		switch tt.state {
+		case StateLeader:
+			sm.becomeLeader()
+		case StateCandidate:
+			sm.becomeCandidate()
+		}
 		sm.Step(pb.Message{From: 1, To: 1, MsgType: pb.MessageType_MsgBeat})
 
 		msgs := sm.readMessages()
